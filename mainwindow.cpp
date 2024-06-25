@@ -120,7 +120,7 @@ void MainWindow::handleLoadClick()
 {
     QFile file("game_log.csv");
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::warning(this, tr("Error"), tr("Could not open file"));
+        QMessageBox::warning(this, tr("Error"), tr("Не могу открыть файл"));
         return;
     }
 
@@ -128,14 +128,15 @@ void MainWindow::handleLoadClick()
     QStringList headers = in.readLine().split(',');
 
     QByteArray previousHash;
-
+    moves.clear();
     int lineNumber = 1;
+
     while (!in.atEnd()) {
         QString line = in.readLine();
         QStringList fields = line.split(',');
 
         if (fields.size() != headers.size()) {
-            QMessageBox::warning(this, tr("Error"), tr("Invalid file format at line %1").arg(lineNumber));
+            QMessageBox::warning(this, tr("Error"), tr("Ошибка чтения файла, не совпадает количество атрибутов в ходе №%1").arg(lineNumber));
             return;
         }
 
@@ -148,7 +149,7 @@ void MainWindow::handleLoadClick()
         QByteArray calculatedHash = QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex();
 
         if (calculatedHash != hash.toUtf8()) {
-            QMessageBox::warning(this, tr("Error"), tr("Checksum error at move %1").arg(lineNumber));
+            QMessageBox::warning(this, tr("Error"), tr("Ошибка контрольной суммы %1").arg(lineNumber));
             return;
         }
         previousHash = calculatedHash;
@@ -160,9 +161,12 @@ void MainWindow::handleLoadClick()
         } else {
             item->setBackground(Qt::green);
         }
+
+        Move move = { row.toInt(), column.toInt(), dateTime, hash };
+        moves.push_back(move);
+
         lineNumber++;
     }
-
     file.close();
-    QMessageBox::information(this, tr("Success"), tr("Game state loaded successfully"));
+    QMessageBox::information(this, tr("Success"), tr("Игра успешно загружена"));
 }
